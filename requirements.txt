@@ -1,0 +1,10 @@
+fastapi
+uvicorn
+transformers
+torch
+datasets
+evaluate
+scikit-learn
+prometheus-fastapi-instrumentator
+pytest
+httpx
