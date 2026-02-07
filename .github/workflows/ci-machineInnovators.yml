@@ -1,8 +1,12 @@
+##Questo al push su main mi permette di lanciare i test unit dell'applicazione
+# Si dovrebbe fare su un altro branch esempio develop oppure Test
+#Ma per semplicità lo facciamo avviare da main
+
 name: Continuous Integration
 
 on:
   push:
-    branches-ignore: [ main ]
+    branches: [ main ]
   pull_request:
     branches: [ main ]
 
