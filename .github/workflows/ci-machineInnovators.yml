@@ -27,7 +27,7 @@ jobs:
           pip install pytest httpx
 
       - name: Run Unit Tests
-        run: pytest tests/test_api.py
+        run: python -m pytest tests/test_api.py
 
       - name: Model Performance Check
         run: python evaluate_model.py
