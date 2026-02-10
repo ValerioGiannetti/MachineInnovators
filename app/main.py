@@ -23,3 +23,8 @@ def predict(tweet: Tweet):
 
 # Integrazione Prometheus
 Instrumentator().instrument(app).expose(app)
+
+    
+if __name__=="__main__":
+    import uvicorn
+    uvicorn.run(app,host="0.0.0.0",port=8000)
