@@ -30,4 +30,4 @@ jobs:
         run: python -m pytest tests/test_api.py
 
       - name: Model Performance Check
-        run: python evaluate_model.py
+        run: python app/evaluate_model.py

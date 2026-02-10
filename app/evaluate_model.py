@@ -3,7 +3,7 @@ from transformers import pipeline
 import evaluate
 
 def run_evaluation():
-    dataset = load_dataset("tweet_eval", "sentiment", split="test")
+    dataset = load_dataset("cardiffnlp/tweet_eval", "sentiment", split="test")
     pipe = pipeline("sentiment-analysis", model="cardiffnlp/twitter-roberta-base-sentiment-latest", device=-1)
     
     # Mappatura label: il modello usa LABEL_0, LABEL_1, LABEL_2
