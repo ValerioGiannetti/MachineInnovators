@@ -30,7 +30,7 @@ jobs:
           context: .
           push: true
          
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/machineInvetors-api:latest
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/machine-invetors-api:latest
 
       - name: Deploy Notification
         run: echo "Immagine caricata con successo su Docker Hub!"
