@@ -46,7 +46,7 @@ f1_metric = evaluate.load("f1")
 
 
 
-def calcolo_metriche(predictions):
+def calcolo_metriche(predictions,references):
     # Calcola i risultati
     results = {
         "accuracy": accuracy_metric.compute(predictions=predictions, references=references),
@@ -63,4 +63,4 @@ if __name__ == "__main__":
     # Estrai testi e label reali dal dataset
     references = dataset["label"]
     predictions = run_evaluation(dataset)
-    calcolo_metriche(predictions)
+    calcolo_metriche(predictions,references)

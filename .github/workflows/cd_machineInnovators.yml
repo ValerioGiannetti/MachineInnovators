@@ -1,6 +1,5 @@
 ##Questo mi permette di creare pacchetti pronti per la produzione 
 ##E in caso caricare l'immagine sia su dockehub che su Hugginface
-
 name: Continuous Deployment
 
 on:
@@ -12,24 +11,26 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout Code
+        uses: actions/checkout@v4
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
+        uses: docker/setup-buildx-action@v3
 
-      - name: Build Docker Image
-        run: |
-          docker build -t twitter-sentiment-api:latest .
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      # Esempio di push su Docker Hub (richiede Secrets nel repository)
-      # - name: Login to DockerHub
-      #   uses: docker/login-action@v2
-      #   with:
-      #     username: ${{ secrets.DOCKERHUB_USERNAME }}
-      #     password: ${{ secrets.DOCKERHUB_TOKEN }}
-      
-      # - name: Push to DockerHub
-      #   run: docker push my-user/twitter-sentiment-api:latest
+      - name: Build and Push to Docker Hub
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+         
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/machineInvetors-api:latest
 
       - name: Deploy Notification
-        run: echo "Deployment completato con successo su main."
+        run: echo "Immagine caricata con successo su Docker Hub!"
