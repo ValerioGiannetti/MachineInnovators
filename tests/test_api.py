@@ -35,11 +35,11 @@ def test_batch_too_many_items():
     assert response.status_code == 422
 
 # --- TEST COERENZA SENTIMENT ---
-
+#con questo testiamo più scenari
 @pytest.mark.parametrize("input_text, expected_sentiment", [
     ("I am so happy today, everything is wonderful!", "Positivo"),
     ("This is the worst day of my life, I hate everything.", "Negativo"),
-    ("The sky is blue and the grass is green.", "Neutro"),
+    ("Today is Tuesday and I am walking to the store.", "Neutro"),
 ])
 def test_sentiment_coherence(input_text, expected_sentiment):
     """Verifica che il sentiment restituito sia quello atteso per frasi ovvie"""
