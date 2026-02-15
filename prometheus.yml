@@ -1,7 +1,19 @@
 global:
-  scrape_interval: 15s
+  scrape_interval: 15s # Frequenza di campionamento (ogni 15 secondi)
+  evaluation_interval: 15s # Frequenza con cui Prometheus valuta le regole di alert
 
 scrape_configs:
-  - job_name: 'fastapi-metrics'
+  # Monitoraggio dell'API di Sentiment
+  - job_name: 'twitter-sentiment-api'
     static_configs:
-      - targets: ['api:8000'] # 'api' è il nome del servizio nel docker-compose
+      # Uso il nome del servizio definito nel docker-compose
+      - targets: ['twitter-sentiment-api:8000']
+    
+    # Questo assicura che Prometheus legga le metriche dall'endpoint /metrics
+    # creato da Instrumentator().instrument(app).expose(app)
+    metrics_path: '/metrics'
+
+  
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']

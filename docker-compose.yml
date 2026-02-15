@@ -1,36 +1,69 @@
 version: '3.8'
 
 services:
-  # 1. L'API con il modello RoBERTa
+  # 1. API con modello RoBERTa e metriche Prometheus
   api:
     build: .
     container_name: twitter-sentiment-api
     ports:
       - "8000:8000"
+    environment:
+      - MODEL_VERSION=v1
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/"]
       interval: 30s
       timeout: 10s
       retries: 3
+    networks:
+      - mlops-network
 
-  # 2. Prometheus per la raccolta metriche
+  # 2. Servizio di Valutazione (Cron/Job MLOps)
+  # Esegue lo script evaluate_model.py e invia i feedback all'API
+  evaluator:
+    build: .
+    container_name: mlo-evaluator
+    
+    command: python evaluate_model.py
+    environment:
+      - API_URL=http://twitter-sentiment-api:8000
+      - MODEL_VERSION=v1
+    depends_on:
+      api:
+        condition: service_healthy
+    networks:
+      - mlops-network
+
+  # 3. Prometheus per lo storage delle metriche
   prometheus:
     image: prom/prometheus:latest
     container_name: prometheus
     volumes:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
     ports:
       - "9090:9090"
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    networks:
+      - mlops-network
 
-  # 3. Grafana per la visualizzazione
+  # 4. Grafana per Dashboard e Alert
   grafana:
     image: grafana/grafana:latest
     container_name: grafana
     ports:
       - "3000:3000"
     environment:
-      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_SECRET} # Cambiala in produzione!
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_SECRET:-admin} 
     depends_on:
       - prometheus
+    networks:
+      - mlops-network
+
+networks:
+  mlops-network:
+    driver: bridge
+
+volumes:
+  prometheus_data:
