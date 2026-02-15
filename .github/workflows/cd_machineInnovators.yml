@@ -26,7 +26,7 @@ jobs:
       - name: Evaluate Model Performance
         id: eval_step
         run: |
-          python evaluate_model.py > evaluation_results.txt
+          python app/evaluate_model.py > evaluation_results.txt
           # Estraiamo l'accuracy dal log dello script (che stampa "Accuracy: 0.7218")
           ACCURACY=$(grep "Accuracy:" evaluation_results.txt | awk '{print $2}')
           echo "Accuracy rilevata: $ACCURACY"
