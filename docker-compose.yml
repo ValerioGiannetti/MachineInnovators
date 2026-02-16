@@ -1,7 +1,7 @@
 version: '3.8'
 
 services:
-  # 1. API con modello RoBERTa e metriche Prometheus
+  # 1. API Sentiment
   api:
     build: .
     container_name: twitter-sentiment-api
@@ -15,25 +15,76 @@ services:
       timeout: 10s
       retries: 3
     networks:
-      - mlops-network
+      - machine-network
 
-  # 2. Servizio di Valutazione (Cron/Job MLOps)
-  # Esegue lo script evaluate_model.py e invia i feedback all'API
-  evaluator:
-    build: .
-    container_name: mlo-evaluator
-    
-    command: python evaluate_model.py
+  # 2. Database per Airflow
+  postgres:
+    image: postgres:13
+    container_name: airflow-db
     environment:
+      - POSTGRES_USER=airflow
+      - POSTGRES_PASSWORD=airflow
+      - POSTGRES_DB=airflow
+    networks:
+      - machine-network
+
+  # 3. Airflow Init (Si avvia, prepara il DB e l'utente, poi esce)
+  airflow-init:
+    image: apache/airflow:2.7.0-python3.9
+    container_name: airflow-init
+    depends_on:
+      - postgres
+    environment:
+      - AIRFLOW__CORE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres/airflow
+    networks:
+      - machine-network
+    entrypoint: /bin/bash
+    command:
+      - -c
+      - |
+        airflow db init
+        airflow users create --username admin --password admin --firstname admin --lastname admin --role Admin --email admin@example.com
+
+  # 4. Airflow Webserver
+  airflow-webserver:
+    image: apache/airflow:2.7.0-python3.9
+    container_name: airflow-webserver
+    command: webserver
+    ports:
+      - "8080:8080"
+    environment:
+      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
+      - AIRFLOW__CORE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres/airflow
+      - AIRFLOW__CORE__LOAD_EXAMPLES=False
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - .:/opt/airflow/app
+    depends_on:
+      airflow-init:
+        condition: service_completed_successfully
+    networks:
+      - machine-network
+
+  # 5. Airflow Scheduler
+  airflow-scheduler:
+    image: apache/airflow:2.7.0-python3.9
+    container_name: airflow-scheduler
+    command: scheduler
+    environment:
+      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
+      - AIRFLOW__CORE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres/airflow
       - API_URL=http://twitter-sentiment-api:8000
       - MODEL_VERSION=v1
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - .:/opt/airflow/app
     depends_on:
-      api:
-        condition: service_healthy
+      airflow-init:
+        condition: service_completed_successfully
     networks:
-      - mlops-network
+      - machine-network
 
-  # 3. Prometheus per lo storage delle metriche
+  # 6. Prometheus
   prometheus:
     image: prom/prometheus:latest
     container_name: prometheus
@@ -46,23 +97,23 @@ services:
       - '--config.file=/etc/prometheus/prometheus.yml'
       - '--storage.tsdb.path=/prometheus'
     networks:
-      - mlops-network
+      - machine-network
 
-  # 4. Grafana per Dashboard e Alert
+  # 7. Grafana
   grafana:
     image: grafana/grafana:latest
     container_name: grafana
     ports:
       - "3000:3000"
     environment:
-      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_SECRET:-admin} 
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_SECRET} 
     depends_on:
       - prometheus
     networks:
-      - mlops-network
+      - machine-network
 
 networks:
-  mlops-network:
+  machine-network:
     driver: bridge
 
 volumes:
